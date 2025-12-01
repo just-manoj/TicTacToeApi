@@ -9,7 +9,7 @@ const roomSchema = new mongoose.Schema({
   roomName: { type: String, required: true, unique: true },
   players: [playerSchema],
   createdAt: { type: Date, default: Date.now },
-  isJoin: { type: Boolean, default: true },
+  canJoin: { type: Boolean, default: true },
   turn: playerSchema,
   turnIndex: { type: Number, default: 0 },
 });

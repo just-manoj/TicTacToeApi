@@ -16,6 +16,7 @@ app.use(express.json());
 
 io.on("connection", async (socket) => {
   console.log("a user connected:", socket.id);
+
   socket.on("createRoom", async ({ roomName }) => {
     const roomSchema = new RoomSchema();
     roomSchema.roomName = roomName;
@@ -28,6 +29,30 @@ io.on("connection", async (socket) => {
     const room = await roomSchema.save();
     socket.join(room._id.toString());
     socket.emit("createRoomSuccess", room);
+  });
+
+  socket.on("joinRoom", async ({ roomName }) => {
+    try {
+      const existingRoom = await RoomSchema.findOne({ roomName });
+      if (existingRoom) {
+        if (existingRoom.players.length >= 2 || !existingRoom.canJoin) {
+          socket.emit("error", "Room is full.");
+          return;
+        }
+        existingRoom.players.push({
+          socketId: socket.id,
+          username: "Guest",
+          symbol: "O",
+        });
+        const room = await existingRoom.save();
+        socket.join(room._id.toString());
+        socket.emit("joinRoomSuccess", room);
+      } else {
+        socket.emit("error", "There is no room with this name.");
+      }
+    } catch (error) {
+      socket.emit("error", "An error occurred while joining the room.");
+    }
   });
 });
 
